@@ -10,3 +10,6 @@
 ## 重要！
 
 这是一个体验版，新功能都会从这里孵化，一旦稳定成熟就会移植进主仓。使用请自行评估风险！
+
+主仓地址：https://github.com/tal-tech/go-zero/tools/goctl
+
