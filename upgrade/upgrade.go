@@ -3,8 +3,8 @@ package upgrade
 import (
 	"fmt"
 
-	"github.com/zeromicro/goctl/rpc/execx"
 	"github.com/urfave/cli"
+	"github.com/zeromicro/goctl/rpc/execx"
 )
 
 // Upgrade gets the latest goctl by

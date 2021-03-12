@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/urfave/cli"
 	"github.com/zeromicro/goctl/api/parser"
 	"github.com/zeromicro/goctl/util"
-	"github.com/urfave/cli"
 )
 
 // DocCommand generate markdown doc file

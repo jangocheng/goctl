@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/zeromicro/goctl/rpc/generator"
 	"github.com/urfave/cli"
+	"github.com/zeromicro/goctl/rpc/generator"
 )
 
 // RPC is to generate rpc service code from a proto file by specifying a proto file using flag src,

@@ -9,12 +9,12 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/tal-tech/go-zero/core/logx"
 	"github.com/tal-tech/go-zero/core/stores/sqlx"
+	"github.com/urfave/cli"
 	"github.com/zeromicro/goctl/config"
 	"github.com/zeromicro/goctl/model/sql/gen"
 	"github.com/zeromicro/goctl/model/sql/model"
 	"github.com/zeromicro/goctl/model/sql/util"
 	"github.com/zeromicro/goctl/util/console"
-	"github.com/urfave/cli"
 )
 
 const (

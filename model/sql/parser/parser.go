@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"github.com/tal-tech/go-zero/core/collection"
+	"github.com/xwb1989/sqlparser"
 	"github.com/zeromicro/goctl/model/sql/converter"
 	"github.com/zeromicro/goctl/model/sql/model"
 	"github.com/zeromicro/goctl/util/console"
 	"github.com/zeromicro/goctl/util/stringx"
-	"github.com/xwb1989/sqlparser"
 )
 
 const timeImport = "time.Time"

@@ -12,10 +12,10 @@ import (
 	"strings"
 
 	"github.com/tal-tech/go-zero/core/errorx"
+	"github.com/urfave/cli"
 	"github.com/zeromicro/goctl/api/parser"
 	"github.com/zeromicro/goctl/api/util"
 	ctlutil "github.com/zeromicro/goctl/util"
-	"github.com/urfave/cli"
 )
 
 const (

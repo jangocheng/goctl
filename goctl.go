@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/urfave/cli"
 	"github.com/zeromicro/goctl/api/apigen"
 	"github.com/zeromicro/goctl/api/dartgen"
 	"github.com/zeromicro/goctl/api/docgen"
@@ -25,7 +26,6 @@ import (
 	rpc "github.com/zeromicro/goctl/rpc/cli"
 	"github.com/zeromicro/goctl/tpl"
 	"github.com/zeromicro/goctl/upgrade"
-	"github.com/urfave/cli"
 )
 
 var (

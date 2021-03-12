@@ -3,9 +3,9 @@ package generate
 import (
 	"fmt"
 
+	"github.com/urfave/cli"
 	"github.com/zeromicro/goctl/model/mongo/template"
 	"github.com/zeromicro/goctl/util"
-	"github.com/urfave/cli"
 )
 
 const (

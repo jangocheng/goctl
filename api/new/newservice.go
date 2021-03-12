@@ -7,10 +7,10 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/urfave/cli"
 	"github.com/zeromicro/goctl/api/gogen"
 	conf "github.com/zeromicro/goctl/config"
 	"github.com/zeromicro/goctl/util"
-	"github.com/urfave/cli"
 )
 
 const apiTemplate = `

@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/urfave/cli"
 	"github.com/zeromicro/goctl/config"
 	"github.com/zeromicro/goctl/model/mongo/generate"
-	"github.com/urfave/cli"
 )
 
 // Command provides the entry for goctl

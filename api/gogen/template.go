@@ -3,8 +3,8 @@ package gogen
 import (
 	"fmt"
 
-	"github.com/zeromicro/goctl/util"
 	"github.com/urfave/cli"
+	"github.com/zeromicro/goctl/util"
 )
 
 const (

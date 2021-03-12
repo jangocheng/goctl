@@ -13,12 +13,12 @@ import (
 
 	"github.com/logrusorgru/aurora"
 	"github.com/tal-tech/go-zero/core/logx"
+	"github.com/urfave/cli"
 	apiformat "github.com/zeromicro/goctl/api/format"
 	"github.com/zeromicro/goctl/api/parser"
 	apiutil "github.com/zeromicro/goctl/api/util"
 	"github.com/zeromicro/goctl/config"
 	"github.com/zeromicro/goctl/util"
-	"github.com/urfave/cli"
 )
 
 const tmpFile = "%s-%d"

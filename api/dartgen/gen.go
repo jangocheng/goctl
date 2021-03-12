@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/tal-tech/go-zero/core/logx"
-	"github.com/zeromicro/goctl/api/parser"
 	"github.com/urfave/cli"
+	"github.com/zeromicro/goctl/api/parser"
 )
 
 // DartCommand create dart network request code
