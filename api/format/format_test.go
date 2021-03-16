@@ -1,6 +1,7 @@
 package format
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,7 +38,10 @@ service A-api {
 )
 
 func TestFormat(t *testing.T) {
-	r, err := apiFormat(notFormattedStr)
+	pwd, err := os.Getwd()
+	assert.Nil(t, err)
+
+	r, err := apiFormat(notFormattedStr, pwd)
 	assert.Nil(t, err)
 	assert.Equal(t, r, formattedStr)
 }

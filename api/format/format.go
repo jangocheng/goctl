@@ -70,7 +70,12 @@ func apiFormatByStdin() error {
 		return err
 	}
 
-	result, err := apiFormat(string(data))
+	pwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	result, err := apiFormat(string(data), pwd)
 	if err != nil {
 		return err
 	}
@@ -86,7 +91,7 @@ func ApiFormatByPath(apiFilePath string) error {
 		return err
 	}
 
-	result, err := apiFormat(string(data))
+	result, err := apiFormat(string(data), filepath.Dir(apiFilePath))
 	if err != nil {
 		return err
 	}
@@ -99,13 +104,8 @@ func ApiFormatByPath(apiFilePath string) error {
 	return ioutil.WriteFile(apiFilePath, []byte(result), os.ModePerm)
 }
 
-func apiFormat(data string) (string, error) {
-	pwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	_, err = parser.ParseContent(data, pwd)
+func apiFormat(data, workDir string) (string, error) {
+	_, err := parser.ParseContent(data, workDir)
 	if err != nil {
 		return "", err
 	}
