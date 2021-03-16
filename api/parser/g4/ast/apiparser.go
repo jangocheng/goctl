@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -82,7 +83,12 @@ func (p *Parser) Parse(filename string) (*Api, error) {
 		return nil, err
 	}
 
-	return p.parse(filename, data, filepath.Dir(filename))
+	abs, err := filepath.Abs(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.parse(filename, data, filepath.Dir(abs))
 }
 
 // ParseContent is used to parse the api from the specified content
@@ -112,7 +118,7 @@ func (p *Parser) parse(filename, content, workDir string) (*Api, error) {
 		if filepath.IsAbs(path) {
 			abs = path
 		} else {
-			abs, err = filepath.Abs(filepath.Join(workDir, path))
+			abs, err = getAbs(workDir, path)
 			if err != nil {
 				return nil, err
 			}
@@ -162,6 +168,28 @@ func (p *Parser) parse(filename, content, workDir string) (*Api, error) {
 	allApi := p.memberFill(apiAstList)
 	allApi.ImportInfo = importInfo
 	return allApi, nil
+}
+
+func getAbs(workDir, rel string) (string, error) {
+	count := strings.Count(rel, "../")
+	abs, err := filepath.Abs(workDir)
+	if err != nil {
+		return "", err
+	}
+
+	for i := 0; i < count; i++ {
+		abs = filepath.Clean(abs)
+		index := strings.LastIndex(abs, "/")
+		if index < 0 {
+			return "", errors.New("resolve path error")
+		}
+		abs = abs[:index]
+	}
+
+	path := strings.ReplaceAll(rel, "../", "")
+	path = filepath.FromSlash(path)
+	abs = filepath.Join(abs, path)
+	return filepath.Abs(abs)
 }
 
 func (p *Parser) invoke(linePrefix, content string) (v *Api, err error) {
