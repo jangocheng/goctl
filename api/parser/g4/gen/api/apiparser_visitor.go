@@ -1,4 +1,4 @@
-// Code generated from tools/goctl/api/parser/g4/ApiParser.g4 by ANTLR 4.9. DO NOT EDIT.
+// Code generated from /Users/anqiansong/goland/go/goctl/api/parser/g4/ApiParser.g4 by ANTLR 4.9.1. DO NOT EDIT.
 
 package api // ApiParser
 import "github.com/antlr/antlr4/runtime/Go/antlr"
@@ -30,6 +30,9 @@ type ApiParserVisitor interface {
 
 	// Visit a parse tree produced by ApiParserParser#importValue.
 	VisitImportValue(ctx *ImportValueContext) interface{}
+
+	// Visit a parse tree produced by ApiParserParser#importPackage.
+	VisitImportPackage(ctx *ImportPackageContext) interface{}
 
 	// Visit a parse tree produced by ApiParserParser#infoSpec.
 	VisitInfoSpec(ctx *InfoSpecContext) interface{}
@@ -75,6 +78,9 @@ type ApiParserVisitor interface {
 
 	// Visit a parse tree produced by ApiParserParser#pointerType.
 	VisitPointerType(ctx *PointerTypeContext) interface{}
+
+	// Visit a parse tree produced by ApiParserParser#packageExpr.
+	VisitPackageExpr(ctx *PackageExprContext) interface{}
 
 	// Visit a parse tree produced by ApiParserParser#mapType.
 	VisitMapType(ctx *MapTypeContext) interface{}

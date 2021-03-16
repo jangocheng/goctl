@@ -19,6 +19,7 @@ import (
 	apiutil "github.com/zeromicro/goctl/api/util"
 	"github.com/zeromicro/goctl/config"
 	"github.com/zeromicro/goctl/util"
+	"github.com/zeromicro/goctl/util/console"
 )
 
 const tmpFile = "%s-%d"
@@ -30,6 +31,7 @@ func GoCommand(c *cli.Context) error {
 	apiFile := c.String("api")
 	dir := c.String("dir")
 	namingStyle := c.String("style")
+	onlyType := c.Bool("types")
 
 	if len(apiFile) == 0 {
 		return errors.New("missing -api")
@@ -38,12 +40,57 @@ func GoCommand(c *cli.Context) error {
 		return errors.New("missing -dir")
 	}
 
+	if onlyType {
+		return DoGenTypes(apiFile, dir, namingStyle)
+	}
+
 	return DoGenProject(apiFile, dir, namingStyle)
 }
 
+// DoGenTypes generates golang types from the specified api
+func DoGenTypes(apiFile, dir, style string) error {
+	apiPath, _, err := util.ParseApiParam(apiFile)
+	if err != nil {
+		return err
+	}
+
+	api, err := parser.Parse(apiPath)
+	if err != nil {
+		return err
+	}
+
+	if len(api.Imports) > 0 {
+		return errors.New("the reused type structure file is not allowed to import other files")
+	}
+
+	cfg, err := config.NewConfig(style)
+	if err != nil {
+		return err
+	}
+
+	err = util.MkdirIfNotExist(dir)
+	if err != nil {
+		return err
+	}
+
+	filename := filepath.Join(dir, filepath.Base(apiFile))
+	err = onlyGenTypes(filename, cfg, api)
+	c := console.NewColorConsole()
+	if err == nil {
+		c.MarkDone()
+	}
+
+	return err
+}
+
 // DoGenProject gen go project files with api file
-func DoGenProject(apiFile, dir, style string) error {
-	api, err := parser.Parse(apiFile)
+func DoGenProject(apiParam, dir, style string) error {
+	apiPath, importMap, err := util.ParseApiParam(apiParam)
+	if err != nil {
+		return err
+	}
+
+	api, err := parser.Parse(apiPath)
 	if err != nil {
 		return err
 	}
@@ -58,17 +105,17 @@ func DoGenProject(apiFile, dir, style string) error {
 	logx.Must(genConfig(dir, cfg, api))
 	logx.Must(genMain(dir, cfg, api))
 	logx.Must(genServiceContext(dir, cfg, api))
-	logx.Must(genTypes(dir, cfg, api))
+	logx.Must(genTypes(dir, importMap, cfg, api))
 	logx.Must(genRoutes(dir, cfg, api))
 	logx.Must(genHandlers(dir, cfg, api))
 	logx.Must(genLogic(dir, cfg, api))
 	logx.Must(genMiddleware(dir, cfg, api))
 
-	if err := backupAndSweep(apiFile); err != nil {
+	if err := backupAndSweep(apiPath); err != nil {
 		return err
 	}
 
-	if err := apiformat.ApiFormatByPath(apiFile); err != nil {
+	if err := apiformat.ApiFormatByPath(apiPath); err != nil {
 		return err
 	}
 

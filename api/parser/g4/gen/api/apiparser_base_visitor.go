@@ -1,4 +1,4 @@
-// Code generated from tools/goctl/api/parser/g4/ApiParser.g4 by ANTLR 4.9. DO NOT EDIT.
+// Code generated from /Users/anqiansong/goland/go/goctl/api/parser/g4/ApiParser.g4 by ANTLR 4.9.1. DO NOT EDIT.
 
 package api // ApiParser
 import "github.com/antlr/antlr4/runtime/Go/antlr"
@@ -36,6 +36,10 @@ func (v *BaseApiParserVisitor) VisitImportBlockValue(ctx *ImportBlockValueContex
 }
 
 func (v *BaseApiParserVisitor) VisitImportValue(ctx *ImportValueContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseApiParserVisitor) VisitImportPackage(ctx *ImportPackageContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
@@ -96,6 +100,10 @@ func (v *BaseApiParserVisitor) VisitDataType(ctx *DataTypeContext) interface{} {
 }
 
 func (v *BaseApiParserVisitor) VisitPointerType(ctx *PointerTypeContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseApiParserVisitor) VisitPackageExpr(ctx *PackageExprContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

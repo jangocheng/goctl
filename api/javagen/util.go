@@ -15,6 +15,7 @@ func writeProperty(writer io.Writer, member spec.Member, indent int) error {
 		writeIndent(writer, indent)
 		fmt.Fprint(writer, member.Comment+util.NL)
 	}
+
 	writeIndent(writer, indent)
 	ty, err := specTypeToJava(member.Type)
 	ty = strings.Replace(ty, "*", "", 1)
@@ -71,7 +72,7 @@ func indentString(indent int) string {
 func specTypeToJava(tp spec.Type) (string, error) {
 	switch v := tp.(type) {
 	case spec.DefineStruct:
-		return util.Title(tp.Name()), nil
+		return util.Title(v.TypeName), nil
 	case spec.PrimitiveType:
 		r, ok := primitiveType(tp.Name())
 		if !ok {

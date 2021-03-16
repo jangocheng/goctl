@@ -85,10 +85,15 @@ func goTypeToTs(tp spec.Type, fromPacket bool) (string, error) {
 }
 
 func addPrefix(tp spec.Type, fromPacket bool) string {
-	if fromPacket {
-		return packagePrefix + util.Title(tp.Name())
+	name := tp.Name()
+	switch v := tp.(type) {
+	case spec.DefineStruct:
+		name = v.TypeName
 	}
-	return util.Title(tp.Name())
+	if fromPacket {
+		return packagePrefix + util.Title(name)
+	}
+	return util.Title(name)
 }
 
 func primitiveType(tp string) (string, bool) {
@@ -129,6 +134,7 @@ func genParamsTypesIfNeed(writer io.Writer, tp spec.Type) error {
 	if len(members) == 0 {
 		return nil
 	}
+
 	fmt.Fprintf(writer, "\n")
 	fmt.Fprintf(writer, "export interface %sParams {\n", util.Title(tp.Name()))
 	if err := writeMembers(writer, tp, true); err != nil {

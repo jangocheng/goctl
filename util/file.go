@@ -2,6 +2,7 @@ package util
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -150,4 +151,31 @@ func createTemplate(file, content string, force bool) error {
 
 	_, err = f.WriteString(content)
 	return err
+}
+
+func ParseApiParam(param string) (string, map[string]string, error) {
+	param = strings.TrimPrefix(param, `"`)
+	param = strings.TrimSuffix(param, `"`)
+	var path string
+	var importMap = make(map[string]string, 0)
+	if !strings.Contains(param, ",") {
+		return param, importMap, nil
+	}
+
+	var components = strings.Split(param, ",")
+	path = components[0]
+	if !FileExists(path) {
+		return "", nil, errors.New("api file not exist: " + param)
+	}
+
+	for _, item := range components[1:] {
+		var components = strings.Split(item, "=")
+		if len(components) != 2 {
+			return "", nil, errors.New("invalid param: " + item)
+		}
+
+		importMap[components[0]] = components[1]
+	}
+
+	return path, importMap, nil
 }

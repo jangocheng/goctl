@@ -22,6 +22,13 @@ type (
 
 	// ParserOption defines an function with argument Parser
 	ParserOption func(p *Parser)
+
+	// ImportInfo describes the import path, the import package and the elements(only structure) in imported file
+	ImportInfo struct {
+		Path      string
+		Package   string
+		Structure map[string]TypeExpr
+	}
 )
 
 // NewParser creates an instance for Parser
@@ -75,27 +82,42 @@ func (p *Parser) Parse(filename string) (*Api, error) {
 		return nil, err
 	}
 
-	return p.parse(filename, data)
+	return p.parse(filename, data, filepath.Dir(filename))
 }
 
 // ParseContent is used to parse the api from the specified content
-func (p *Parser) ParseContent(content string) (*Api, error) {
-	return p.parse("", content)
+func (p *Parser) ParseContent(content, workDir string) (*Api, error) {
+	return p.parse("", content, workDir)
 }
 
 // parse is used to parse api from the content
 // filename is only used to mark the file where the error is located
-func (p *Parser) parse(filename, content string) (*Api, error) {
+func (p *Parser) parse(filename, content, workDir string) (*Api, error) {
 	root, err := p.invoke(filename, content)
 	if err != nil {
 		return nil, err
 	}
 
 	var apiAstList []*Api
+	importInfo := make(map[string][]*ImportInfo)
 	apiAstList = append(apiAstList, root)
+	dup := make(map[string]PlaceHolder)
+	for k := range root.typeM {
+		dup[k] = Holder
+	}
+
 	for _, imp := range root.Import {
 		path := imp.Value.Text()
-		data, err := p.readContent(path)
+		var abs string
+		if filepath.IsAbs(path) {
+			abs = path
+		} else {
+			abs, err = filepath.Abs(filepath.Join(workDir, path))
+			if err != nil {
+				return nil, err
+			}
+		}
+		data, err := p.readContent(abs)
 		if err != nil {
 			return nil, err
 		}
@@ -105,20 +127,40 @@ func (p *Parser) parse(filename, content string) (*Api, error) {
 			return nil, err
 		}
 
-		err = p.valid(root, nestedApi)
+		for k, v := range nestedApi.typeM {
+			if _, ok := dup[k]; ok {
+				return nil, fmt.Errorf(`%s line %d:%d duplicate type declaration '%s'`, nestedApi.LinePrefix, v.NameExpr().Line(), v.NameExpr().Column(), v.NameExpr().Text())
+			}
+		}
+		var pkg string
+		if imp.Package != nil {
+			pkg = imp.Package.Text()
+			importInfo[pkg] = append(importInfo[pkg], &ImportInfo{
+				Path:      path,
+				Package:   pkg,
+				Structure: nestedApi.typeM,
+			})
+		}
+
+		err = p.valid(root, nestedApi, pkg)
 		if err != nil {
 			return nil, err
+		}
+
+		if len(pkg) > 0 {
+			continue
 		}
 
 		apiAstList = append(apiAstList, nestedApi)
 	}
 
-	err = p.checkTypeDeclaration(apiAstList)
+	err = p.checkTypeDeclaration(apiAstList, importInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	allApi := p.memberFill(apiAstList)
+	allApi.ImportInfo = importInfo
 	return allApi, nil
 }
 
@@ -136,7 +178,7 @@ func (p *Parser) invoke(linePrefix, content string) (v *Api, err error) {
 	}()
 
 	if linePrefix != "" {
-		p.linePrefix = linePrefix
+		p.linePrefix = filepath.Base(linePrefix)
 	}
 
 	inputStream := antlr.NewInputStream(content)
@@ -158,7 +200,7 @@ func (p *Parser) invoke(linePrefix, content string) (v *Api, err error) {
 	return
 }
 
-func (p *Parser) valid(mainApi *Api, nestedApi *Api) error {
+func (p *Parser) valid(mainApi *Api, nestedApi *Api, pkg string) error {
 	err := p.nestedApiCheck(mainApi, nestedApi)
 	if err != nil {
 		return err
@@ -209,7 +251,12 @@ func (p *Parser) valid(mainApi *Api, nestedApi *Api) error {
 
 	// duplicate type check
 	for _, each := range nestedApi.Type {
-		if _, ok := mainTypeMap[each.NameExpr().Text()]; ok {
+		k := each.NameExpr().Text()
+		if len(pkg) > 0 {
+			k = pkg + "." + k
+		}
+
+		if _, ok := mainTypeMap[k]; ok {
 			return fmt.Errorf("%s line %d:%d duplicate type declaration '%s'",
 				nestedApi.LinePrefix, each.NameExpr().Line(), each.NameExpr().Column(), each.NameExpr().Text())
 		}
@@ -285,7 +332,7 @@ func (p *Parser) memberFill(apiList []*Api) *Api {
 }
 
 // checkTypeDeclaration checks whether a struct type has been declared in context
-func (p *Parser) checkTypeDeclaration(apiList []*Api) error {
+func (p *Parser) checkTypeDeclaration(apiList []*Api, importInfo map[string][]*ImportInfo) error {
 	types := make(map[string]TypeExpr)
 
 	for _, root := range apiList {
@@ -296,7 +343,7 @@ func (p *Parser) checkTypeDeclaration(apiList []*Api) error {
 
 	for _, apiItem := range apiList {
 		linePrefix := apiItem.LinePrefix
-		err := p.checkTypes(apiItem, linePrefix, types)
+		err := p.checkTypes(apiItem, linePrefix, types, importInfo)
 		if err != nil {
 			return err
 		}
@@ -359,7 +406,7 @@ func (p *Parser) checkRequestBody(route *Route, types map[string]TypeExpr, lineP
 	return nil
 }
 
-func (p *Parser) checkTypes(apiItem *Api, linePrefix string, types map[string]TypeExpr) error {
+func (p *Parser) checkTypes(apiItem *Api, linePrefix string, types map[string]TypeExpr, importInfo map[string][]*ImportInfo) error {
 	for _, each := range apiItem.Type {
 		tp, ok := each.(*TypeStruct)
 		if !ok {
@@ -367,7 +414,7 @@ func (p *Parser) checkTypes(apiItem *Api, linePrefix string, types map[string]Ty
 		}
 
 		for _, member := range tp.Fields {
-			err := p.checkType(linePrefix, types, member.DataType)
+			err := p.checkType(linePrefix, types, member.DataType, importInfo)
 			if err != nil {
 				return err
 			}
@@ -376,9 +423,21 @@ func (p *Parser) checkTypes(apiItem *Api, linePrefix string, types map[string]Ty
 	return nil
 }
 
-func (p *Parser) checkType(linePrefix string, types map[string]TypeExpr, expr DataType) error {
+func (p *Parser) checkType(linePrefix string, types map[string]TypeExpr, expr DataType, importInfo map[string][]*ImportInfo) error {
 	if expr == nil {
 		return nil
+	}
+
+	structure := make(map[string]TypeExpr)
+	for _, list := range importInfo {
+		for _, e := range list {
+			for k, v := range e.Structure {
+				if _, ok := structure[k]; ok {
+					return fmt.Errorf("%s line %d:%d duplicate type '%s' in %s", linePrefix, v.NameExpr().Line(), v.NameExpr().Column(), v.NameExpr().Text(), e.Path)
+				}
+				structure[k] = v
+			}
+		}
 	}
 
 	switch v := expr.(type) {
@@ -387,10 +446,29 @@ func (p *Parser) checkType(linePrefix string, types map[string]TypeExpr, expr Da
 		if api.IsBasicType(name) {
 			return nil
 		}
-		_, ok := types[name]
-		if !ok {
-			return fmt.Errorf("%s line %d:%d can not found declaration '%s' in context",
-				linePrefix, v.Literal.Line(), v.Literal.Column(), name)
+
+		if v.Package != nil {
+			pkg := v.Package.Name.Text()
+			imp, ok := importInfo[pkg]
+			if !ok {
+				return fmt.Errorf("%s line %d:%d package '%s' is not defined in imports", linePrefix, v.Literal.Line(), v.Literal.Column(), pkg)
+			}
+
+			var list []string
+			for _, e := range imp {
+				list = append(list, strings.ReplaceAll(e.Path, `"`, ""))
+			}
+
+			structName := strings.TrimPrefix(v.Literal.Text(), pkg+".")
+			if _, ok = structure[structName]; !ok {
+				return fmt.Errorf("%s line %d:%d can not found declaration '%s' in import '%s'", linePrefix, v.Literal.Line(), v.Literal.Column(), structName, strings.Join(list, " and "))
+			}
+		} else {
+			_, ok := types[name]
+			if !ok {
+				return fmt.Errorf("%s line %d:%d can not found declaration '%s' in context",
+					linePrefix, v.Literal.Line(), v.Literal.Column(), name)
+			}
 		}
 
 	case *Pointer:
@@ -398,15 +476,33 @@ func (p *Parser) checkType(linePrefix string, types map[string]TypeExpr, expr Da
 		if api.IsBasicType(name) {
 			return nil
 		}
-		_, ok := types[name]
-		if !ok {
-			return fmt.Errorf("%s line %d:%d can not found declaration '%s' in context",
-				linePrefix, v.Name.Line(), v.Name.Column(), name)
+
+		if v.Package != nil {
+			pkg := v.Package.Name.Text()
+			imp, ok := importInfo[pkg]
+			if !ok {
+				return fmt.Errorf("%s line %d:%d package '%s' is not defined in imports", linePrefix, v.PointerExpr.Line(), v.PointerExpr.Column(), pkg)
+			}
+
+			var list []string
+			for _, e := range imp {
+				list = append(list, strings.ReplaceAll(e.Path, `"`, ""))
+			}
+			structName := v.Name.Text()
+			if _, ok = structure[structName]; !ok {
+				return fmt.Errorf("%s line %d:%d can not found declaration '%s' in import '%s'", linePrefix, v.PointerExpr.Line(), v.PointerExpr.Column(), structName, strings.Join(list, " and "))
+			}
+		} else {
+			_, ok := types[name]
+			if !ok {
+				return fmt.Errorf("%s line %d:%d can not found declaration '%s' in context",
+					linePrefix, v.Name.Line(), v.Name.Column(), name)
+			}
 		}
 	case *Map:
-		return p.checkType(linePrefix, types, v.Value)
+		return p.checkType(linePrefix, types, v.Value, importInfo)
 	case *Array:
-		return p.checkType(linePrefix, types, v.Literal)
+		return p.checkType(linePrefix, types, v.Literal, importInfo)
 	default:
 		return nil
 	}

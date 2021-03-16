@@ -8,8 +8,23 @@ import (
 type ImportExpr struct {
 	Import      Expr
 	Value       Expr
+	As          Expr
+	Package     Expr
 	DocExpr     []Expr
 	CommentExpr Expr
+}
+
+// ImportValue describes the value and package of import
+type ImportValue struct {
+	Value   Expr
+	As      Expr
+	Package Expr
+}
+
+// ImportPackage describes the package alias
+type ImportPackage struct {
+	As      Expr
+	Package Expr
 }
 
 // VisitImportSpec implements from api.BaseApiParserVisitor
@@ -30,11 +45,13 @@ func (v *ApiVisitor) VisitImportSpec(ctx *api.ImportSpecContext) interface{} {
 // VisitImportLit implements from api.BaseApiParserVisitor
 func (v *ApiVisitor) VisitImportLit(ctx *api.ImportLitContext) interface{} {
 	importToken := v.newExprWithToken(ctx.GetImportToken())
-	valueExpr := ctx.ImportValue().Accept(v).(Expr)
+	valueExpr := ctx.ImportValue().Accept(v).(*ImportValue)
 	return []*ImportExpr{
 		{
 			Import:      importToken,
-			Value:       valueExpr,
+			Value:       valueExpr.Value,
+			As:          valueExpr.As,
+			Package:     valueExpr.Package,
 			DocExpr:     v.getDoc(ctx),
 			CommentExpr: v.getComment(ctx),
 		},
@@ -58,9 +75,11 @@ func (v *ApiVisitor) VisitImportBlock(ctx *api.ImportBlockContext) interface{} {
 
 // VisitImportBlockValue implements from api.BaseApiParserVisitor
 func (v *ApiVisitor) VisitImportBlockValue(ctx *api.ImportBlockValueContext) interface{} {
-	value := ctx.ImportValue().Accept(v).(Expr)
+	value := ctx.ImportValue().Accept(v).(*ImportValue)
 	return &ImportExpr{
-		Value:       value,
+		As:          value.As,
+		Package:     value.Package,
+		Value:       value.Value,
 		DocExpr:     v.getDoc(ctx),
 		CommentExpr: v.getComment(ctx),
 	}
@@ -68,7 +87,26 @@ func (v *ApiVisitor) VisitImportBlockValue(ctx *api.ImportBlockValueContext) int
 
 // VisitImportValue implements from api.BaseApiParserVisitor
 func (v *ApiVisitor) VisitImportValue(ctx *api.ImportValueContext) interface{} {
-	return v.newExprWithTerminalNode(ctx.STRING())
+	value := v.newExprWithTerminalNode(ctx.STRING())
+	ret := &ImportValue{
+		Value: value,
+	}
+	if ctx.ImportPackage() != nil {
+		p := ctx.ImportPackage().Accept(v)
+		pkg := p.(*ImportPackage)
+		ret.As = pkg.As
+		ret.Package = pkg.Package
+	}
+
+	return ret
+}
+
+// VisitImportPackage implements from api.BaseApiParserVisitor
+func (v *ApiVisitor) VisitImportPackage(ctx *api.ImportPackageContext) interface{} {
+	return &ImportPackage{
+		As:      v.newExprWithToken(ctx.GetAsToken()),
+		Package: v.newExprWithToken(ctx.GetPackageName()),
+	}
 }
 
 // Format provides a formatter for api command, now nothing to do
@@ -86,6 +124,12 @@ func (i *ImportExpr) Equal(v interface{}) bool {
 	imp, ok := v.(*ImportExpr)
 	if !ok {
 		return false
+	}
+
+	if i.Package != nil {
+		if !i.Package.Equal(imp.Package) {
+			return false
+		}
 	}
 
 	if !EqualDoc(i, imp) {

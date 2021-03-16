@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 	"unicode"
 
 	"github.com/zeromicro/goctl/api/parser/g4/ast"
@@ -23,39 +24,43 @@ func Parse(filename string) (*spec.ApiSpec, error) {
 		return nil, err
 	}
 
-	spec := new(spec.ApiSpec)
-	p := parser{ast: ast, spec: spec}
+	sp := new(spec.ApiSpec)
+	p := parser{ast: ast, spec: sp}
 	err = p.convert2Spec()
 	if err != nil {
 		return nil, err
 	}
 
-	return spec, nil
+	return sp, nil
 }
 
 // ParseContent parses the api content
-func ParseContent(content string) (*spec.ApiSpec, error) {
+func ParseContent(content, workDir string) (*spec.ApiSpec, error) {
 	astParser := ast.NewParser()
-	ast, err := astParser.ParseContent(content)
+	ast, err := astParser.ParseContent(content, workDir)
 	if err != nil {
 		return nil, err
 	}
 
-	spec := new(spec.ApiSpec)
-	p := parser{ast: ast, spec: spec}
+	sp := new(spec.ApiSpec)
+	p := parser{ast: ast, spec: sp}
 	err = p.convert2Spec()
 	if err != nil {
 		return nil, err
 	}
 
-	return spec, nil
+	return sp, nil
 }
 
 func (p parser) convert2Spec() error {
 	p.fillInfo()
 	p.fillSyntax()
-	p.fillImport()
-	err := p.fillTypes()
+	err := p.fillImport()
+	if err != nil {
+		return err
+	}
+
+	err = p.fillTypes()
 	if err != nil {
 		return err
 	}
@@ -80,12 +85,47 @@ func (p parser) fillSyntax() {
 	}
 }
 
-func (p parser) fillImport() {
+func (p parser) fillImport() error {
 	if len(p.ast.Import) > 0 {
 		for _, item := range p.ast.Import {
-			p.spec.Imports = append(p.spec.Imports, spec.Import{Value: item.Value.Text()})
+			var pkg string
+			if item.Package != nil {
+				pkg = item.Package.Text()
+			}
+
+			var types []spec.Type
+			if len(pkg) > 0 {
+				list, ok := p.ast.ImportInfo[pkg]
+				if ok {
+					for _, info := range list {
+						for _, e := range info.Structure {
+							switch v := (e).(type) {
+							case *ast.TypeStruct:
+								var members []spec.Member
+								for _, item := range v.Fields {
+									members = append(members, p.fieldToMember(item))
+								}
+								types = append(types, spec.DefineStruct{
+									RawName:  v.Name.Text(),
+									TypeName: v.Name.Text(),
+									Members:  members,
+									Docs:     p.stringExprs(v.Doc()),
+								})
+							default:
+								return fmt.Errorf("unknown type %+v", v)
+							}
+						}
+					}
+				}
+			}
+			p.spec.Imports = append(p.spec.Imports, spec.Import{
+				Value:     strings.TrimSuffix(strings.TrimPrefix(item.Value.Text(), `"`), `"`),
+				AsPackage: pkg,
+				Types:     types,
+			})
 		}
 	}
+	return nil
 }
 
 func (p parser) fillTypes() error {
@@ -97,9 +137,10 @@ func (p parser) fillTypes() error {
 				members = append(members, p.fieldToMember(item))
 			}
 			p.spec.Types = append(p.spec.Types, spec.DefineStruct{
-				RawName: v.Name.Text(),
-				Members: members,
-				Docs:    p.stringExprs(v.Doc()),
+				RawName:  v.Name.Text(),
+				TypeName: v.Name.Text(),
+				Members:  members,
+				Docs:     p.stringExprs(v.Doc()),
 			})
 		default:
 			return fmt.Errorf("unknown type %+v", v)
@@ -114,12 +155,15 @@ func (p parser) fillTypes() error {
 			for _, member := range v.Members {
 				switch v := member.Type.(type) {
 				case spec.DefineStruct:
-					tp, err := p.findDefinedType(v.RawName)
-					if err != nil {
-						return err
-					}
+					// do not check if it's a import struct type,because it's checked while parsing
+					if len(v.Package) == 0 {
+						tp, err := p.findDefinedType(v.RawName)
+						if err != nil {
+							return err
+						}
 
-					member.Type = *tp
+						member.Type = *tp
+					}
 				}
 				members = append(members, member)
 			}
@@ -175,8 +219,12 @@ func (p parser) astTypeToSpec(in ast.DataType) spec.Type {
 		if api.IsBasicType(raw) {
 			return spec.PrimitiveType{RawName: raw}
 		}
+		var pkg string
+		if v.Package != nil {
+			pkg = v.Package.Name.Text()
+		}
 
-		return spec.DefineStruct{RawName: raw}
+		return spec.DefineStruct{Package: pkg, RawName: raw, TypeName: strings.TrimPrefix(raw, pkg+".")}
 	case *ast.Interface:
 		return spec.InterfaceType{RawName: v.Literal.Text()}
 	case *ast.Map:
@@ -189,7 +237,15 @@ func (p parser) astTypeToSpec(in ast.DataType) spec.Type {
 			return spec.PointerType{RawName: v.PointerExpr.Text(), Type: spec.PrimitiveType{RawName: raw}}
 		}
 
-		return spec.PointerType{RawName: v.PointerExpr.Text(), Type: spec.DefineStruct{RawName: raw}}
+		var pkg string
+		if v.Package != nil {
+			pkg = v.Package.Name.Text()
+		}
+		return spec.PointerType{RawName: v.PointerExpr.Text(), Type: spec.DefineStruct{
+			RawName:  raw,
+			TypeName: v.Name.Text(),
+			Package:  pkg,
+		}}
 	}
 
 	panic(fmt.Sprintf("unspported type %+v", in))

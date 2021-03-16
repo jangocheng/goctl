@@ -19,6 +19,9 @@ const (
 
 func genComponents(dir string, api *spec.ApiSpec) error {
 	types := api.Types
+	for _, item := range api.Imports {
+		types = append(types, item.Types...)
+	}
 	if len(types) == 0 {
 		return nil
 	}

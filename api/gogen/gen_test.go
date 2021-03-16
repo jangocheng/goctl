@@ -1,6 +1,7 @@
 package gogen
 
 import (
+	"fmt"
 	goformat "go/format"
 	"io/ioutil"
 	"os"
@@ -9,8 +10,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tal-tech/go-zero/core/logx"
 	"github.com/zeromicro/goctl/api/parser"
 	"github.com/zeromicro/goctl/rpc/execx"
+	"github.com/zeromicro/goctl/util"
 )
 
 const testApiTemplate = `
@@ -538,11 +541,24 @@ func validate(t *testing.T, api string) {
 
 func validateWithCamel(t *testing.T, api, camel string) {
 	dir := "_go"
-	os.RemoveAll(dir)
-	err := DoGenProject(api, dir, camel)
+	workDir, err := filepath.Abs(dir)
 	defer os.RemoveAll(dir)
+
 	assert.Nil(t, err)
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	fmt.Println(workDir)
+	err = util.MkdirIfNotExist(workDir)
+	assert.Nil(t, err)
+
+	name := filepath.Base(workDir)
+	_, err = execx.Run("go mod init "+name, workDir)
+	if err != nil {
+		logx.Error(err)
+		return
+	}
+
+	err = DoGenProject(api, workDir, camel)
+	assert.Nil(t, err)
+	filepath.Walk(workDir, func(path string, info os.FileInfo, err error) error {
 		if strings.HasSuffix(path, ".go") {
 			code, err := ioutil.ReadFile(path)
 			assert.Nil(t, err)
@@ -550,8 +566,10 @@ func validateWithCamel(t *testing.T, api, camel string) {
 		}
 		return nil
 	})
+	_, err = execx.Run("go mod tidy", workDir)
+	assert.Nil(t, err)
 
-	_, err = execx.Run("go test ./...", dir)
+	_, err = execx.Run("go test ./...", workDir)
 	assert.Nil(t, err)
 }
 

@@ -1,0 +1,11 @@
+syntax = "v1"
+
+type Image {
+    Url string `json:"url"`
+    Width int `json:"width"`
+    Height int `json:"height"`
+}
+
+type Video {
+    Name string `json:"name"`
+}

@@ -114,6 +114,10 @@ var (
 							Name:  "style",
 							Usage: "the file naming format, see [https://github.com/tal-tech/go-zero/tree/master/tools/goctl/config/readme.md]",
 						},
+						cli.BoolFlag{
+							Name:  "types, t",
+							Usage: "a flag for generating types(classes), the service should be ignored if true, default [false]",
+						},
 					},
 					Action: gogen.GoCommand,
 				},
