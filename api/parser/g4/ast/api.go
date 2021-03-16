@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/tal-tech/go-zero/core/lang"
 	"github.com/zeromicro/goctl/api/parser/g4/gen/api"
 )
 
@@ -15,18 +16,19 @@ type Api struct {
 	importM    map[string]PlaceHolder
 	Info       *InfoExpr
 	Type       []TypeExpr
-	typeM      map[string]PlaceHolder
+	typeM      map[string]TypeExpr
 	Service    []*Service
 	serviceM   map[string]PlaceHolder
 	handlerM   map[string]PlaceHolder
 	routeM     map[string]PlaceHolder
+	ImportInfo map[string][]*ImportInfo
 }
 
 // VisitApi implements from api.BaseApiParserVisitor
 func (v *ApiVisitor) VisitApi(ctx *api.ApiContext) interface{} {
 	var final Api
 	final.importM = map[string]PlaceHolder{}
-	final.typeM = map[string]PlaceHolder{}
+	final.typeM = map[string]TypeExpr{}
 	final.serviceM = map[string]PlaceHolder{}
 	final.handlerM = map[string]PlaceHolder{}
 	final.routeM = map[string]PlaceHolder{}
@@ -52,7 +54,7 @@ func (v *ApiVisitor) acceptService(root *Api, final *Api) {
 		for _, route := range service.ServiceApi.ServiceRoute {
 			uniqueRoute := fmt.Sprintf("%s %s", route.Route.Method.Text(), route.Route.Path.Text())
 			if _, ok := final.routeM[uniqueRoute]; ok {
-				v.panic(route.Route.Method, fmt.Sprintf("duplicate route '%s'", uniqueRoute))
+				v.panic(route.Route.Method, fmt.Sprintf("duplicate route: %s", uniqueRoute))
 			}
 
 			final.routeM[uniqueRoute] = Holder
@@ -61,7 +63,7 @@ func (v *ApiVisitor) acceptService(root *Api, final *Api) {
 				atServerM := map[string]PlaceHolder{}
 				for _, kv := range route.AtServer.Kv {
 					if _, ok := atServerM[kv.Key.Text()]; ok {
-						v.panic(kv.Key, fmt.Sprintf("duplicate key '%s'", kv.Key.Text()))
+						v.panic(kv.Key, fmt.Sprintf("duplicate key: %s", kv.Key.Text()))
 					}
 					atServerM[kv.Key.Text()] = Holder
 					if kv.Key.Text() == "handler" {
@@ -83,7 +85,7 @@ func (v *ApiVisitor) acceptService(root *Api, final *Api) {
 			}
 
 			if _, ok := final.handlerM[handlerExpr.Text()]; ok {
-				v.panic(handlerExpr, fmt.Sprintf("duplicate handler '%s'", handlerExpr.Text()))
+				v.panic(handlerExpr, fmt.Sprintf("duplicate handler: %s", handlerExpr.Text()))
 			}
 			final.handlerM[handlerExpr.Text()] = Holder
 		}
@@ -96,7 +98,7 @@ func (v *ApiVisitor) duplicateServerItemCheck(service *Service) {
 		atServerM := map[string]PlaceHolder{}
 		for _, kv := range service.AtServer.Kv {
 			if _, ok := atServerM[kv.Key.Text()]; ok {
-				v.panic(kv.Key, fmt.Sprintf("duplicate key '%s'", kv.Key.Text()))
+				v.panic(kv.Key, fmt.Sprintf("duplicate key: %s", kv.Key.Text()))
 			}
 
 			atServerM[kv.Key.Text()] = Holder
@@ -107,11 +109,32 @@ func (v *ApiVisitor) duplicateServerItemCheck(service *Service) {
 func (v *ApiVisitor) acceptType(root *Api, final *Api) {
 	for _, tp := range root.Type {
 		if _, ok := final.typeM[tp.NameExpr().Text()]; ok {
-			v.panic(tp.NameExpr(), fmt.Sprintf("duplicate type '%s'", tp.NameExpr().Text()))
+			v.panic(tp.NameExpr(), fmt.Sprintf("duplicate type: %s", tp.NameExpr().Text()))
 		}
 
-		final.typeM[tp.NameExpr().Text()] = Holder
+		v.acceptField(tp)
+		final.typeM[tp.NameExpr().Text()] = tp
 		final.Type = append(final.Type, tp)
+	}
+}
+
+func (v *ApiVisitor) acceptField(tp TypeExpr) {
+	st, ok := tp.(*TypeStruct)
+	if !ok {
+		return
+	}
+
+	m := make(map[string]lang.PlaceholderType)
+	for _, f := range st.Fields {
+		if f.IsAnonymous {
+			continue
+		}
+
+		if _, ok := m[f.Name.Text()]; ok {
+			v.panic(f.Name, fmt.Sprintf("duplicate field: %s", f.Name.Text()))
+		}
+
+		m[f.Name.Text()] = lang.Placeholder
 	}
 }
 
@@ -124,7 +147,7 @@ func (v *ApiVisitor) acceptInfo(root *Api, final *Api) {
 
 		for _, value := range root.Info.Kvs {
 			if _, ok := infoM[value.Key.Text()]; ok {
-				v.panic(value.Key, fmt.Sprintf("duplicate key '%s'", value.Key.Text()))
+				v.panic(value.Key, fmt.Sprintf("duplicate key: %s", value.Key.Text()))
 			}
 			infoM[value.Key.Text()] = Holder
 		}
@@ -135,8 +158,9 @@ func (v *ApiVisitor) acceptInfo(root *Api, final *Api) {
 
 func (v *ApiVisitor) acceptImport(root *Api, final *Api) {
 	for _, imp := range root.Import {
-		if _, ok := final.importM[imp.Value.Text()]; ok {
-			v.panic(imp.Import, fmt.Sprintf("duplicate import '%s'", imp.Value.Text()))
+		importValue := imp.Value.Text()
+		if _, ok := final.importM[importValue]; ok {
+			v.panic(imp.Import, fmt.Sprintf("duplicate import: %s", importValue))
 		}
 
 		final.importM[imp.Value.Text()] = Holder

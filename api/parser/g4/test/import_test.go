@@ -140,4 +140,18 @@ func TestImport(t *testing.T) {
 		 import `)
 		assert.Error(t, err)
 	})
+
+	t.Run("import with package", func(t *testing.T) {
+		v, err := parser.Accept(importAccept, `import "foo.api" as foo`)
+		assert.Nil(t, err)
+		list := v.([]*ast.ImportExpr)
+		for _, each := range list {
+			assert.True(t, each.Equal(&ast.ImportExpr{
+				Import:  ast.NewTextExpr("import"),
+				Value:   ast.NewTextExpr(`"foo.api"`),
+				As:      ast.NewTextExpr("as"),
+				Package: ast.NewTextExpr("foo"),
+			}))
+		}
+	})
 }

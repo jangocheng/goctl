@@ -57,6 +57,45 @@ func TestField(t *testing.T) {
 
 		_, err = parser.Accept(fieldAccept, `map`)
 		assert.Error(t, err)
+
+	})
+
+	t.Run("anonymousWithPackage", func(t *testing.T) {
+		_, err := parser.Accept(fieldAccept, `foo.`)
+		assert.Error(t, err)
+
+		_, err = parser.Accept(fieldAccept, `.Foo`)
+		assert.Error(t, err)
+
+		v, err := parser.Accept(fieldAccept, `foo.Foo`)
+		assert.Nil(t, err)
+		f := v.(*ast.TypeField)
+		assert.True(t, f.Equal(&ast.TypeField{
+			IsAnonymous: true,
+			DataType: &ast.Literal{
+				Package: &ast.Package{
+					Name: ast.NewTextExpr("foo"),
+					Dot:  ast.NewTextExpr("."),
+				},
+				Literal: ast.NewTextExpr("foo.Foo"),
+			},
+		}))
+
+		v, err = parser.Accept(fieldAccept, `*foo.Foo`)
+		assert.Nil(t, err)
+		f = v.(*ast.TypeField)
+		assert.True(t, f.Equal(&ast.TypeField{
+			IsAnonymous: true,
+			DataType: &ast.Pointer{
+				Package: &ast.Package{
+					Name: ast.NewTextExpr("foo"),
+					Dot:  ast.NewTextExpr("."),
+				},
+				PointerExpr: ast.NewTextExpr("*foo.Foo"),
+				Star:        ast.NewTextExpr("*"),
+				Name:        ast.NewTextExpr("Foo"),
+			},
+		}))
 	})
 
 	t.Run("normal", func(t *testing.T) {
@@ -96,6 +135,21 @@ func TestDataType_ID(t *testing.T) {
 	dt := func(p *api.ApiParserParser, visitor *ast.ApiVisitor) interface{} {
 		return p.DataType().Accept(visitor)
 	}
+	t.Run("packageStruct", func(t *testing.T) {
+		v, err := parser.Accept(dt, `foo.Foo`)
+		assert.Nil(t, err)
+		id := v.(ast.DataType)
+		assert.True(t, id.Equal(
+			&ast.Literal{
+				Literal: ast.NewTextExpr("foo.Foo"),
+				Package: &ast.Package{
+					Name: ast.NewTextExpr("foo"),
+					Dot:  ast.NewTextExpr("."),
+				},
+			},
+		))
+	})
+
 	t.Run("Struct", func(t *testing.T) {
 		v, err := parser.Accept(dt, `Foo`)
 		assert.Nil(t, err)

@@ -71,9 +71,10 @@ type componentsContext struct {
 	responseTypes []spec.Type
 	imports       []string
 	members       []spec.Member
+	importMap     map[string]string
 }
 
-func genComponents(dir, packetName string, api *spec.ApiSpec) error {
+func genComponents(dir, packetName string, api *spec.ApiSpec, importMap map[string]string) error {
 	types := api.Types
 	if len(types) == 0 {
 		return nil
@@ -92,7 +93,7 @@ func genComponents(dir, packetName string, api *spec.ApiSpec) error {
 		}
 	}
 
-	context := componentsContext{api: api, requestTypes: requestTypes, responseTypes: responseTypes}
+	context := componentsContext{api: api, requestTypes: requestTypes, responseTypes: responseTypes, importMap: importMap}
 	for _, ty := range types {
 		if err := context.createComponent(dir, packetName, ty); err != nil {
 			return err
@@ -234,6 +235,21 @@ func (c *componentsContext) writeMembers(writer io.Writer, tp spec.Type, indent 
 			}
 
 			c.members = append(c.members, member)
+			if memberType, ok := member.Type.(spec.DefineStruct); ok {
+				if len(memberType.Package) == 0 {
+					continue
+				}
+
+				for _, item := range c.api.Imports {
+					if item.AsPackage == memberType.Package {
+						refer := c.importMap[item.Value]
+						ir := fmt.Sprintf("image %s.memberType.TypeName", refer)
+						if len(refer) > 0 && !stringx.Contains(c.imports, ir) {
+							c.imports = append(c.imports, ir)
+						}
+					}
+				}
+			}
 		}
 	}
 

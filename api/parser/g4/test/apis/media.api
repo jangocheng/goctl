@@ -1,0 +1,19 @@
+syntax = "v1"
+
+import "mediatypes.api"
+import "base.api" as media
+
+type Media {
+    Content string `json:"content"`
+    Video media.Video `json:"video"`
+    Video2 *Video `json:"video"`
+    Audio *media.Audio `json:"audio"`
+    Image *Image `json:"image"`
+}
+
+service media-api {
+    @handler getMedia
+    get /api/media/get returns (Media)
+}
+
+

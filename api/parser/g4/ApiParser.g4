@@ -22,7 +22,8 @@ importSpec:     importLit|importBlock;
 importLit:      {match(p,"import")}importToken=ID importValue ;
 importBlock:    {match(p,"import")}importToken=ID '(' importBlockValue+ ')';
 importBlockValue:   importValue;
-importValue:    {checkImportValue(p)}STRING;
+importValue:    {checkImportValue(p)}STRING importPackage?;
+importPackage:  {match(p,"as")}asToken=ID packageName=ID;
 
 // info
 infoSpec:       {match(p,"info")}infoToken=ID lp='(' kvLit+ rp=')';
@@ -43,8 +44,8 @@ typeBlockStruct: {checkKeyword(p)}structName=ID structToken=ID? lbrace='{'  fiel
 typeBlockAlias: {checkKeyword(p)}alias=ID assign='='? dataType;
 field:          {isNormal(p)}? normalField|anonymousFiled ;
 normalField:    {checkKeyword(p)}fieldName=ID dataType tag=RAW_STRING?;
-anonymousFiled: star='*'? ID;
-dataType:       {isInterface(p)}ID
+anonymousFiled: star='*'? packageExpr? ID;
+dataType:       packageExpr? {isInterface(p)}ID
                 |mapType
                 |arrayType
                 |inter='interface{}'
@@ -52,7 +53,8 @@ dataType:       {isInterface(p)}ID
                 |pointerType
                 |typeStruct
                 ;
-pointerType:    star='*' {checkKeyword(p)}ID;
+pointerType:    star='*' packageExpr? {checkKeyword(p)}ID;
+packageExpr:    packageName=ID dot='.';
 mapType:        {match(p,"map")}mapToken=ID lbrack='[' {checkKey(p)}key=ID rbrack=']' value=dataType;
 arrayType:      lbrack='[' rbrack=']' dataType;
 
@@ -63,7 +65,7 @@ serviceApi:     {match(p,"service")}serviceToken=ID serviceName lbrace='{' servi
 serviceRoute:   atDoc? (atServer|atHandler) route;
 atDoc:          ATDOC lp='('? ((kvLit+)|STRING) rp=')'?;
 atHandler:      ATHANDLER ID;
-route:          {checkHttpMethod(p)}httpMethod=ID path request=body? returnToken=ID? response=replybody?;
+route:          {checkHTTPMethod(p)}httpMethod=ID path request=body? returnToken=ID? response=replybody?;
 body:           lp='(' (ID)? rp=')';
 replybody:      lp='(' dataType? rp=')';
 // kv

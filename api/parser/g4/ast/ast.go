@@ -67,7 +67,7 @@ func NewApiVisitor(options ...VisitorOption) *ApiVisitor {
 func (v *ApiVisitor) panic(expr Expr, msg string) {
 	errString := fmt.Sprintf("%s line %d:%d  %s", v.prefix, expr.Line(), expr.Column(), msg)
 	if v.debug {
-		fmt.Println(errString)
+		v.log.Error(errString)
 	}
 
 	panic(errString)

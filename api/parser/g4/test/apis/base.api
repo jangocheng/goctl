@@ -1,0 +1,10 @@
+syntax = "v1"
+
+type Video {
+    Name string `json:"name"`
+    Url string `json:"url"`
+}
+
+type Audio {
+    Name string `json:"name"`
+}

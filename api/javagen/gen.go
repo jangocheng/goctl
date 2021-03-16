@@ -14,16 +14,21 @@ import (
 
 // JavaCommand the generate java code command entrance
 func JavaCommand(c *cli.Context) error {
-	apiFile := c.String("api")
+	apiParam := c.String("api")
 	dir := c.String("dir")
-	if len(apiFile) == 0 {
+	if len(apiParam) == 0 {
 		return errors.New("missing -api")
 	}
 	if len(dir) == 0 {
 		return errors.New("missing -dir")
 	}
 
-	api, err := parser.Parse(apiFile)
+	apiPath, importMap, err := util.ParseApiParam(apiParam)
+	if err != nil {
+		return err
+	}
+
+	api, err := parser.Parse(apiPath)
 	if err != nil {
 		return err
 	}
@@ -35,7 +40,7 @@ func JavaCommand(c *cli.Context) error {
 
 	logx.Must(util.MkdirIfNotExist(dir))
 	logx.Must(genPacket(dir, packetName, api))
-	logx.Must(genComponents(dir, packetName, api))
+	logx.Must(genComponents(dir, packetName, api, importMap))
 
 	fmt.Println(aurora.Green("Done."))
 	return nil
