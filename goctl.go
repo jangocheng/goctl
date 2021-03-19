@@ -133,6 +133,10 @@ var (
 							Name:  "api",
 							Usage: "the api file",
 						},
+						cli.BoolFlag{
+							Name:  "types, t",
+							Usage: "a flag for generating types(classes) default [false]",
+						},
 					},
 					Action: javagen.JavaCommand,
 				},

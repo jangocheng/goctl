@@ -23,6 +23,7 @@ func JavaCommand(c *cli.Context) error {
 		return errors.New("missing -dir")
 	}
 
+	onlyType := c.Bool("types")
 	apiPath, importMap, err := util.ParseApiParam(apiParam)
 	if err != nil {
 		return err
@@ -34,6 +35,10 @@ func JavaCommand(c *cli.Context) error {
 	}
 
 	packetName := api.Service.Name
+	if onlyType {
+		return genComponents(dir, packetName, api, importMap)
+	}
+
 	if strings.HasSuffix(packetName, "-api") {
 		packetName = packetName[:len(packetName)-4]
 	}
