@@ -371,6 +371,10 @@ var (
 							Name:  "proto_path, I",
 							Usage: `native command of protoc, specify the directory in which to search for imports. [optional]`,
 						},
+						cli.StringSliceFlag{
+							Name:  "go_opt",
+							Usage: `native command of protoc-gen-go, specify the mapping from proto to go, eg --go_opt=proto_import=go_package_import. [optional]`,
+						},
 						cli.StringFlag{
 							Name:  "dir, d",
 							Usage: `the target path of the code`,

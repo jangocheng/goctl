@@ -1,7 +1,10 @@
 package generator
 
 import (
+	"errors"
+	"github.com/zeromicro/goctl/rpc/execx"
 	"os/exec"
+	"strings"
 
 	"github.com/zeromicro/goctl/util/console"
 )
@@ -11,8 +14,11 @@ type DefaultGenerator struct {
 	log console.Console
 }
 
+// just test interface implement
+var _ Generator = &DefaultGenerator{}
+
 // NewDefaultGenerator returns an instance of DefaultGenerator
-func NewDefaultGenerator() *DefaultGenerator {
+func NewDefaultGenerator() Generator {
 	log := console.NewColorConsole()
 	return &DefaultGenerator{
 		log: log,
@@ -33,5 +39,17 @@ func (g *DefaultGenerator) Prepare() error {
 	}
 
 	_, err = exec.LookPath("protoc-gen-go")
+	if err != nil {
+		return err
+	}
+
+	version, _ := execx.Run("protoc-gen-go --version", "")
+	if strings.HasPrefix(version, "protoc-gen-go") {
+		return errors.New(`unsupported plugin protoc-gen-go which installed from google.golang.org/protobuf/cmd/protoc-gen-go, 
+please replace it by the following command:
+go get -u github.com/golang/protobuf/protoc-gen-go
+we recommend to use version before v1.3.5`)
+	}
+
 	return err
 }
