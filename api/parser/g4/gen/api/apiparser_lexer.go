@@ -1,4 +1,4 @@
-// Code generated from /Users/anqiansong/goland/go/goctl/api/parser/g4/ApiParser.g4 by ANTLR 4.9.1. DO NOT EDIT.
+// Code generated from goctl/api/parser/g4/ApiParser.g4 by ANTLR 4.9.1. DO NOT EDIT.
 
 package api
 
