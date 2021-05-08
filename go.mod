@@ -17,4 +17,4 @@ require (
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2
 )
 
-replace github.com/antlr/antlr4 v0.0.0-20210506161523-0a1c3e3ce1ca => github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210506161523-0a1c3e3ce1ca
+replace github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210506161523-0a1c3e3ce1ca => github.com/antlr/antlr4 v0.0.0-20210506161523-0a1c3e3ce1ca
