@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/antlr/antlr4 v0.0.0-20210311224141-c2f104cd0810
+	github.com/antlr/antlr4 v0.0.0-20210105212045-464bcbc32de2
 	github.com/emicklei/proto v1.9.0
 	github.com/fatih/structtag v1.2.0
 	github.com/go-sql-driver/mysql v1.5.0
@@ -16,3 +16,5 @@ require (
 	github.com/urfave/cli v1.22.5
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2
 )
+
+replace github.com/antlr/antlr4 v0.0.0-20210506161523-0a1c3e3ce1ca => github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210506161523-0a1c3e3ce1ca
