@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/zeromicro/antlr"
 	"github.com/zeromicro/goctl/api/parser/g4/gen/api"
 	"github.com/zeromicro/goctl/util/console"
 )
