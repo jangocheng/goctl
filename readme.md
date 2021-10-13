@@ -7,9 +7,12 @@
 [![Release](https://img.shields.io/github/v/release/zeromicro/goctl.svg?style=flat-square)](https://github.com/zeromicro/goctl)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 重要！
+## Important!
 
-这是一个体验版，新功能都会从这里孵化，一旦稳定成熟就会移植进主仓。使用请自行评估风险！
+This is an experimental version. New features are innovated in this repo, and will be merged into the main repo. Use it on your risk!
 
-主仓地址：https://github.com/tal-tech/go-zero/tools/goctl
+Install the stable version like this:
 
+```
+go install go install github.com/tal-tech/go-zero/tools/goctl
+```
