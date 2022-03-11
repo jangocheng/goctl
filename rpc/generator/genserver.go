@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tal-tech/go-zero/core/collection"
+	"github.com/zeromicro/go-zero/core/collection"
 	conf "github.com/zeromicro/goctl/config"
 	"github.com/zeromicro/goctl/rpc/parser"
 	"github.com/zeromicro/goctl/util"

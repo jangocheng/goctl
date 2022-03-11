@@ -3,7 +3,7 @@ package gen
 import (
 	"strings"
 
-	"github.com/tal-tech/go-zero/core/collection"
+	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/goctl/model/sql/template"
 	"github.com/zeromicro/goctl/util"
 	"github.com/zeromicro/goctl/util/stringx"

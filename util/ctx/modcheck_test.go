@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tal-tech/go-zero/core/stringx"
+	"github.com/zeromicro/go-zero/core/stringx"
 	"github.com/zeromicro/goctl/rpc/execx"
 	"github.com/zeromicro/goctl/util"
 )

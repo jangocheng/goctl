@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tal-tech/go-zero/core/stringx"
+	"github.com/zeromicro/go-zero/core/stringx"
 	"github.com/zeromicro/goctl/api/gogen"
 	"github.com/zeromicro/goctl/api/spec"
 	"github.com/zeromicro/goctl/api/util"

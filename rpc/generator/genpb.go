@@ -3,7 +3,7 @@ package generator
 import (
 	"bytes"
 	"fmt"
-	"github.com/tal-tech/go-zero/core/collection"
+	"github.com/zeromicro/go-zero/core/collection"
 	conf "github.com/zeromicro/goctl/config"
 	"github.com/zeromicro/goctl/rpc/execx"
 	"github.com/zeromicro/goctl/rpc/parser"
