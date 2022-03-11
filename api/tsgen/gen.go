@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/logrusorgru/aurora"
-	"github.com/tal-tech/go-zero/core/logx"
 	"github.com/urfave/cli"
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/goctl/api/parser"
 	"github.com/zeromicro/goctl/util"
 )

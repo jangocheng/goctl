@@ -9,7 +9,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/tal-tech/go-zero/core/collection"
+	"github.com/zeromicro/go-zero/core/collection"
 	"github.com/zeromicro/goctl/api/spec"
 	"github.com/zeromicro/goctl/api/util"
 	ctlutil "github.com/zeromicro/goctl/util"

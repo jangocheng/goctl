@@ -10,7 +10,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/tal-tech/go-zero/core/stringx"
+	"github.com/zeromicro/go-zero/core/stringx"
 	"github.com/zeromicro/goctl/api/spec"
 	apiutil "github.com/zeromicro/goctl/api/util"
 	"github.com/zeromicro/goctl/util"

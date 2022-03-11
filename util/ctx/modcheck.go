@@ -4,7 +4,7 @@ import (
 	"errors"
 	"os"
 
-	"github.com/tal-tech/go-zero/core/jsonx"
+	"github.com/zeromicro/go-zero/core/jsonx"
 	"github.com/zeromicro/goctl/rpc/execx"
 )
 

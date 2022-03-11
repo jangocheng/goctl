@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/logrusorgru/aurora"
-	"github.com/tal-tech/go-zero/core/errorx"
 	"github.com/urfave/cli"
+	"github.com/zeromicro/go-zero/core/errorx"
 	"github.com/zeromicro/goctl/api/gogen"
 	"github.com/zeromicro/goctl/docker"
 	"github.com/zeromicro/goctl/kube"
